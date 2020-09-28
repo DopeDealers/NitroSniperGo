@@ -2,9 +2,10 @@
 
 [![GitHub release](https://img.shields.io/github/release/Vedzaa/NitroSniperGo.svg)](https://github.com/Vedzaa/NitroSniperGo/releases)
 
-Discord Nitro sniper and Giveaway joiner in Go.
+Xyntix sniper is a fork of Vedzaa's Discord Nitro sniper
+to implement caching to reduce risk of continuously claiming
+previous nitro codes/fake codes thus reducing ban risk
 
-It also sends a DM to giveaway host when won.
 
 ![Screenshot](screenshot.png)
 
@@ -14,8 +15,9 @@ It also sends a DM to giveaway host when won.
  go get github.com/bwmarrin/discordgo
  go get github.com/fatih/color
  go get github.com/valyala/fasthttp
+ go get github.com/patrickmn/go-cache
  go build
- ./NitroSniperGo
+ ./XyntixSniperGo
  ```
  
 ### How to obtain your token
