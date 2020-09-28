@@ -1,6 +1,6 @@
 # NitroSniperGo
 
-[![GitHub release](https://img.shields.io/github/release/Vedzaa/NitroSniperGo.svg)](https://github.com/Vedzaa/NitroSniperGo/releases)
+[![GitHub release](https://img.shields.io/github/release/DopeDealers/XyntixSniperGo.svg)](https://github.com/DopeDealers/XyntixSniperGo/releases)
 
 Xyntix sniper is a fork of Vedzaa's Discord Nitro sniper
 to implement caching to reduce risk of continuously claiming
@@ -14,6 +14,12 @@ risk even more
 these two features slow it down
 a little bit but reduce the risk
 of you losing your account.
+
+
+### NOTICE
+the caching is STILL a W.I.P
+and may not be the fastest/best method but i
+will continue to work on this for a short while
 
 
 ![Screenshot](screenshot.PNG)
