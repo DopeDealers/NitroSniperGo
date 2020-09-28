@@ -7,6 +7,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/fatih/color"
 	"github.com/valyala/fasthttp"
+	gocache "github.com/patrickmn/go-cache"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -16,35 +17,36 @@ import (
 	"strings"
 	"syscall"
 	"time"
+	"unsafe"
 )
 
 var (
-	Token             string
-	userID            string
-	re                = regexp.MustCompile("(discord.com/gifts/|discordapp.com/gifts/|discord.gift/)([a-zA-Z0-9]+)")
-	_                 = regexp.MustCompile("https://privnote.com/.*")
-	reGiveaway        = regexp.MustCompile("You won the \\*\\*(.*)\\*\\*")
-	reGiveawayMessage = regexp.MustCompile("<https://discordapp.com/channels/(.*)/(.*)/(.*)>")
-	magenta           = color.New(color.FgMagenta)
-	green             = color.New(color.FgGreen)
-	yellow            = color.New(color.FgYellow)
-	red               = color.New(color.FgRed)
-	cyan              = color.New(color.FgCyan)
-	strPost           = []byte("POST")
-	_                 = []byte("GET")
+	c          = gocache.New(20*time.Minute, 40*time.Minute)
+	Token      string
+	userID     string
+	re         = regexp.MustCompile("(discord.com/gifts/|discordapp.com/gifts/|discord.gift/)([a-zA-Z0-9]+)")
+	rePrivnote = regexp.MustCompile("https://privnote.com/.*")
+	reGiveaway = regexp.MustCompile("You won the \\*\\*(.*)\\*\\*")
+	magenta    = color.New(color.FgMagenta)
+	green      = color.New(color.FgGreen)
+	red        = color.New(color.FgRed)
+	higreen    = color.New(color.FgHiGreen)
+	strPost    = []byte("POST")
+	strGet     = []byte("GET")
 )
 
 func init() {
+	SetConsoleTitle("Discord Xyntix Sniper")
 	file, err := ioutil.ReadFile("token.json")
 	if err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "Failed read file: %s\n", err)
+		fmt.Fprintf(os.Stderr, "Failed read file: %s\n", err)
 		os.Exit(1)
 	}
 
 	var f interface{}
 	err = json.Unmarshal(file, &f)
 	if err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "Failed to parse JSON: %s\n", err)
+		fmt.Fprintf(os.Stderr, "Failed to parse JSON: %s\n", err)
 		os.Exit(1)
 	}
 
@@ -60,19 +62,18 @@ func main() {
 	c := exec.Command("clear")
 
 	c.Stdout = os.Stdout
-	_ = c.Run()
-	color.Red(`
-▓█████▄  ██▓  ██████  ▄████▄   ▒█████   ██▀███  ▓█████▄      ██████  ███▄    █  ██▓ ██▓███  ▓█████  ██▀███
-▒██▀ ██▌▓██▒▒██    ▒ ▒██▀ ▀█  ▒██▒  ██▒▓██ ▒ ██▒▒██▀ ██▌   ▒██    ▒  ██ ▀█   █ ▓██▒▓██░  ██▒▓█   ▀ ▓██ ▒ ██▒
-░██   █▌▒██▒░ ▓██▄   ▒▓█    ▄ ▒██░  ██▒▓██ ░▄█ ▒░██   █▌   ░ ▓██▄   ▓██  ▀█ ██▒▒██▒▓██░ ██▓▒▒███   ▓██ ░▄█ ▒
-░▓█▄   ▌░██░  ▒   ██▒▒▓▓▄ ▄██▒▒██   ██░▒██▀▀█▄  ░▓█▄   ▌     ▒   ██▒▓██▒  ▐▌██▒░██░▒██▄█▓▒ ▒▒▓█  ▄ ▒██▀▀█▄
-░▒████▓ ░██░▒██████▒▒▒ ▓███▀ ░░ ████▓▒░░██▓ ▒██▒░▒████▓    ▒██████▒▒▒██░   ▓██░░██░▒██▒ ░  ░░▒████▒░██▓ ▒██▒
-▒▒▓  ▒ ░▓  ▒ ▒▓▒ ▒ ░░ ░▒ ▒  ░░ ▒░▒░▒░ ░ ▒▓ ░▒▓░ ▒▒▓  ▒    ▒ ▒▓▒ ▒ ░░ ▒░   ▒ ▒ ░▓  ▒▓▒░ ░  ░░░ ▒░ ░░ ▒▓ ░▒▓░
-░ ▒  ▒  ▒ ░░ ░▒  ░ ░  ░  ▒     ░ ▒ ▒░   ░▒ ░ ▒░ ░ ▒  ▒    ░ ░▒  ░ ░░ ░░   ░ ▒░ ▒ ░░▒ ░      ░ ░  ░  ░▒ ░ ▒░
-░ ░  ░  ▒ ░░  ░  ░  ░        ░ ░ ░ ▒    ░░   ░  ░ ░  ░    ░  ░  ░     ░   ░ ░  ▒ ░░░          ░     ░░   ░
-░     ░        ░  ░ ░          ░ ░     ░        ░             ░           ░  ░              ░  ░   ░
-░                   ░                           ░
-	`)
+	c.Run()
+	color.Magenta(`
+	▒██   ██▒▓██   ██▓ ███▄    █ ▄▄▄█████▓ ██▓▒██   ██▒     ██████  ███▄    █  ██▓ ██▓███  ▓█████  ██▀███  
+	▒▒ █ █ ▒░ ▒██  ██▒ ██ ▀█   █ ▓  ██▒ ▓▒▓██▒▒▒ █ █ ▒░   ▒██    ▒  ██ ▀█   █ ▓██▒▓██░  ██▒▓█   ▀ ▓██ ▒ ██▒
+	░░  █   ░  ▒██ ██░▓██  ▀█ ██▒▒ ▓██░ ▒░▒██▒░░  █   ░   ░ ▓██▄   ▓██  ▀█ ██▒▒██▒▓██░ ██▓▒▒███   ▓██ ░▄█ ▒
+	 ░ █ █ ▒   ░ ▐██▓░▓██▒  ▐▌██▒░ ▓██▓ ░ ░██░ ░ █ █ ▒      ▒   ██▒▓██▒  ▐▌██▒░██░▒██▄█▓▒ ▒▒▓█  ▄ ▒██▀▀█▄  
+	▒██▒ ▒██▒  ░ ██▒▓░▒██░   ▓██░  ▒██▒ ░ ░██░▒██▒ ▒██▒   ▒██████▒▒▒██░   ▓██░░██░▒██▒ ░  ░░▒████▒░██▓ ▒██▒
+	▒▒ ░ ░▓ ░   ██▒▒▒ ░ ▒░   ▒ ▒   ▒ ░░   ░▓  ▒▒ ░ ░▓ ░   ▒ ▒▓▒ ▒ ░░ ▒░   ▒ ▒ ░▓  ▒▓▒░ ░  ░░░ ▒░ ░░ ▒▓ ░▒▓░
+	░░   ░▒ ░ ▓██ ░▒░ ░ ░░   ░ ▒░    ░     ▒ ░░░   ░▒ ░   ░ ░▒  ░ ░░ ░░   ░ ▒░ ▒ ░░▒ ░      ░ ░  ░  ░▒ ░ ▒░
+	 ░    ░   ▒ ▒ ░░     ░   ░ ░   ░       ▒ ░ ░    ░     ░  ░  ░     ░   ░ ░  ▒ ░░░          ░     ░░   ░ 
+	 ░    ░   ░ ░              ░           ░   ░    ░           ░           ░  ░              ░  ░   ░     
+			  ░ ░                                                                                          `)
 	dg, err := discordgo.New(Token)
 	if err != nil {
 		fmt.Println("error creating Discord session,", err)
@@ -80,6 +81,7 @@ func main() {
 	}
 
 	dg.AddHandler(messageCreate)
+	dg.AddHandler(disconnect)
 
 	err = dg.Open()
 	if err != nil {
@@ -88,17 +90,18 @@ func main() {
 	}
 
 	t := time.Now()
-	color.Cyan("Sniping Discord Nitro and Giveaway on " + strconv.Itoa(len(dg.State.Guilds)) + " Servers 🔫\n\n")
+	color.HiGreen("Sniping Discord Nitro on " + strconv.Itoa(len(dg.State.Guilds)) + " Servers ₿\n\n")
 
-	_, _ = magenta.Print(t.Format("15:04:05 "))
-	fmt.Println("[+] Bot is ready")
+	magenta.Print(t.Format("15:04:05 "))
+	higreen.Print("[+]")
+	fmt.Println(" Bot is ready")
 	userID = dg.State.User.ID
 
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
 	<-sc
 
-	_ = dg.Close()
+	dg.Close()
 }
 
 func checkCode(bodyString string) {
@@ -106,13 +109,12 @@ func checkCode(bodyString string) {
 	if strings.Contains(bodyString, "This gift has been redeemed already.") {
 		color.Yellow("[-] Code has been already redeemed")
 	} else if strings.Contains(bodyString, "nitro") {
-		_, _ = green.Println("[+] Code applied")
+		_, _ = higreen.Println("[+] Code applied")
 	} else if strings.Contains(bodyString, "Unknown Gift Code") {
 		_, _ = red.Println("[x] Invalid Code")
 	} else {
 		color.Yellow("[-] Cannot check gift validity")
 	}
-
 }
 
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -120,6 +122,20 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if re.Match([]byte(m.Content)) {
 
 		code := re.FindStringSubmatch(m.Content)
+		if m.Author.ID == userID {
+			magenta.Print(time.Now().Format("15:04:05 "))
+			red.Print("[x] Auto-detected user sent code: ")
+			color.HiMagenta(" Will not Claim/Check any further")
+			return
+		}
+		if cached, found := c.Get("codes"); found {
+			if code[2] == cached {
+				magenta.Print(time.Now().Format("15:04:05 "))
+				red.Print("[x] Cached/Claimed code found")
+				red.Print(code)
+				return
+			}
+		}
 
 		if len(code) < 2 {
 			return
@@ -127,7 +143,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 		if len(code[2]) < 16 {
 			_, _ = magenta.Print(time.Now().Format("15:04:05 "))
-			_, _ = red.Print("[=] Auto-detected a fake code: ")
+			_, _ = red.Print("[x] Auto-detected a fake code: ")
 			_, _ = red.Print(code[2])
 			fmt.Println(" from " + m.Author.String())
 			return
@@ -162,6 +178,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			if err != nil {
 				println()
 				checkCode(bodyString)
+				c.Set("codes", code[2], gocache.NoExpiration)
 				return
 			}
 		}
@@ -172,6 +189,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			if err != nil {
 				println()
 				checkCode(bodyString)
+				c.Set("codes", code[2], gocache.NoExpiration)
 				return
 			}
 		}
@@ -180,95 +198,24 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		_, _ = magenta.Println(" [" + guild.Name + " > " + channel.Name + "]")
 		checkCode(bodyString)
 
-	} else if strings.Contains(strings.ToLower(m.Content), "**giveaway**") || (strings.Contains(strings.ToLower(m.Content), "react with") && strings.Contains(strings.ToLower(m.Content), "giveaway")) {
-		if len(m.Embeds) > 0 && m.Embeds[0].Author != nil {
-			if !strings.Contains(strings.ToLower(m.Embeds[0].Author.Name), "nitro") {
-				return
-			}
-		} else {
-			return
-		}
-		time.Sleep(time.Second)
-		guild, err := s.State.Guild(m.GuildID)
-		if err != nil || guild == nil {
-			guild, err = s.Guild(m.GuildID)
-			if err != nil {
-				return
-			}
-		}
-
-		channel, err := s.State.Channel(m.ChannelID)
-		if err != nil || guild == nil {
-			channel, err = s.Channel(m.ChannelID)
-			if err != nil {
-				return
-			}
-		}
-		_, _ = magenta.Print(time.Now().Format("15:04:05 "))
-		_, _ = yellow.Print("[-] Enter Giveaway ")
-		_, _ = magenta.Println(" [" + guild.Name + " > " + channel.Name + "]")
-		_ = s.MessageReactionAdd(m.ChannelID, m.ID, "🎉")
-
-	} else if (strings.Contains(strings.ToLower(m.Content), "giveaway") || strings.Contains(strings.ToLower(m.Content), "win") || strings.Contains(strings.ToLower(m.Content), "won")) && strings.Contains(m.Content, userID) {
-		reGiveawayHost := regexp.MustCompile("Hosted by: <@(.*)>")
-		won := reGiveaway.FindStringSubmatch(m.Content)
-		giveawayID := reGiveawayMessage.FindStringSubmatch(m.Content)
-		guild, err := s.State.Guild(m.GuildID)
-		if err != nil || guild == nil {
-			guild, err = s.Guild(m.GuildID)
-			if err != nil {
-				return
-			}
-		}
-
-		channel, err := s.State.Channel(m.ChannelID)
-		if err != nil || guild == nil {
-			channel, err = s.Channel(m.ChannelID)
-			if err != nil {
-				return
-			}
-		}
-		if giveawayID == nil {
-			_, _ = magenta.Print(time.Now().Format("15:04:05 "))
-			_, _ = green.Print("[+] Won Giveaway")
-			if len(won) > 1 {
-				_, _ = green.Print(": ")
-				_, _ = cyan.Println(won[1])
-			}
-			_, _ = magenta.Println(" [" + guild.Name + " > " + channel.Name + "]")
-
-			return
-		}
-		messages, _ := s.ChannelMessages(m.ChannelID, 1, "", "", giveawayID[3])
-
-		_, _ = magenta.Print(time.Now().Format("15:04:05 "))
-		_, _ = green.Print("[+] Won Giveaway")
-		if len(won) > 1 {
-			_, _ = green.Print(": ")
-			_, _ = cyan.Print(won[1])
-		}
-		_, _ = magenta.Println(" [" + guild.Name + " > " + channel.Name + "]")
-
-		giveawayHost := reGiveawayHost.FindStringSubmatch(messages[0].Embeds[0].Description)
-		if len(giveawayHost) < 2 {
-			return
-		}
-		hostChannel, err := s.UserChannelCreate(giveawayHost[1])
-
-		if err != nil {
-			return
-		}
-		time.Sleep(time.Second * 9)
-
-		_, err = s.ChannelMessageSend(hostChannel.ID, "Hi, I won a giveaway !")
-		if err != nil {
-			return
-		}
-
-		host, _ := s.User(giveawayHost[1])
-		_, _ = magenta.Print(time.Now().Format("15:04:05 "))
-		_, _ = green.Print("[+] Sent DM to host: ")
-		_, _ = fmt.Println(host.Username + "#" + host.Discriminator)
 	}
 
+}
+
+func disconnect(s *discordgo.Session, d *discordgo.Disconnect) {
+	// add cache saving to file soon
+}
+
+func SetConsoleTitle(title string) (int, error) {
+	handle, err := syscall.LoadLibrary("Kernel32.dll")
+	if err != nil {
+		return 0, err
+	}
+	defer syscall.FreeLibrary(handle)
+	proc, err := syscall.GetProcAddress(handle, "SetConsoleTitleW")
+	if err != nil {
+		return 0, err
+	}
+	r, _, err := syscall.Syscall(proc, 1, uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(title))), 0, 0)
+	return int(r), err
 }
