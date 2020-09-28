@@ -11,6 +11,11 @@ continue further with the code claiming to reduce ban
 risk even more
 
 
+these two features slow it down
+a little bit but reduce the risk
+of you losing your account.
+
+
 ![Screenshot](screenshot.PNG)
 
 ### Usage
