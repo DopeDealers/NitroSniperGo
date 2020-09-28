@@ -21,12 +21,14 @@ of you losing your account.
 ### Usage
 
 ```
+ git clone https://github.com/DopeDealers/XyntixSniperGo
+ cd XyntixSniperGo\
  go get github.com/bwmarrin/discordgo
  go get github.com/fatih/color
  go get github.com/valyala/fasthttp
  go get github.com/patrickmn/go-cache
  go build
- ./XyntixSniperGo
+ start XyntixSniperGo.exe
  ```
  
 ### How to obtain your token
