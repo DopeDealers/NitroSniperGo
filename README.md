@@ -6,8 +6,12 @@ Xyntix sniper is a fork of Vedzaa's Discord Nitro sniper
 to implement caching to reduce risk of continuously claiming
 previous nitro codes/fake codes thus reducing ban risk
 
+auto detects if user sent the gift code and then doesnt
+continue further with the code claiming to reduce ban
+risk even more
 
-![Screenshot](screenshot.png)
+
+![Screenshot](screenshot.PNG)
 
 ### Usage
 
