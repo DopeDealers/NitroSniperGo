@@ -1,4 +1,4 @@
-# NitroSniperGo
+# XyntixSniper
 
 [![GitHub release](https://img.shields.io/github/release/DopeDealers/XyntixSniperGo.svg)](https://github.com/DopeDealers/XyntixSniperGo/releases)
 
